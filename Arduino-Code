@@ -1,1 +1,35 @@
-Script that reads AQI (Air quality index and PPM from )arduino uno board.
+import serial
+import time
+from azure.iot.device import IoTHubDeviceClient, Message
+
+# Azure IoT Central device connection details
+# Uncomment and edit these if needed
+# SCOPE_ID = "One00EF3A3F"
+# DEVICE_ID = "f462f12b-78bf-45eb-b7f0-9786d7d15d90"
+# DEVICE_KEY = "YourDeviceKeyHere"
+
+# Connection string from Azure IoT Central
+CONNECTION_STRING = "HostName=air-quality-index.azureiotcentral.com;DeviceId=arduino-1;SharedAccessKey=YOUR_KEY_HERE"
+
+# Connect to Arduino Serial (make sure the COM port is correct)
+arduino = serial.Serial('COM5', 9600)
+time.sleep(2)
+
+# Create Azure IoT client
+client = IoTHubDeviceClient.create_from_connection_string(CONNECTION_STRING)
+
+while True:
+    try:
+        # Read data from Arduino (Serial input)
+        data = arduino.readline().decode().strip()  # Read data from Arduino (AQI)
+        print("AQI:", data)
+
+        # Format message as JSON and send to Azure
+        message = Message(f'{{"AQI": {data}}}')
+        client.send_message(message)
+        print("Data sent to Azure IoT Central")
+
+        time.sleep(5)  # Send data every 5 seconds
+
+    except Exception as e:
+        print("Error:", e)
